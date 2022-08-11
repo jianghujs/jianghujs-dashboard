@@ -20,7 +20,7 @@
 # 数据库初始化
 create database `jianghujs-dashboard` default character set utf8mb4 collate utf8mb4_bin;
 use jianghujs-dashboard;
-# 运行 sql/jianghujs-dashboard.sql 文件
+# 运行 sql/init.sql 文件
 ```
 
 ## 测试账号 & 测试环境
@@ -29,17 +29,4 @@ use jianghujs-dashboard;
 
 ## 页面
 
-1. 应用协议: studentManagement01.html
-   * 增删改查（select，insert，softUpdate，softDelete）
-2. 前端对接: studentManagement03.html
-3. 前端优化: studentManagement04.html
-4. 服务端搜索: studentManagement05.html
-   * 应用协议：sql演示
-
-## FAQ
-
-- egg-jianghu mysql view
-```sql
-DROP VIEW IF EXISTS `_view01_user`;
-CREATE ALGORITHM = UNDEFINED SQL SECURITY DEFINER VIEW `_view01_user` AS select * from `_user`;
-```
+1. 数据看板: dashboard.html
