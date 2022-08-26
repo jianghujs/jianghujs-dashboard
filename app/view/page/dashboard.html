@@ -146,7 +146,6 @@ new Vue({
   template: '#app-template',
   vueComponent: 'page',
   vuetify: new Vuetify(),
-  mixins: [window.jianghuUiActionMixins],
   data: {
     website: {"id":1,"websiteUuid":"Zg9RTz1FjHn3QO0z3MFC_","websiteName":"命定官网 - 中文","websiteDomain":"www.mingding.org","websiteConfig":{"总览":true,"访问日志":true,"站内搜索关键词":true,"页面访问量列表":false,"来源域名url列表":true,"国家排行":true,"语言排行":true,"浏览器客户端":true,"屏幕分辨率":true,"预估访客停留时间":true,"操作系统排行":true,"分类排行":true,"文章排行":true,"浏览器搜索引擎":true,"IP访问量":true,"404访问日志":true,"用户访问排行":false},"operation":"jhInsert","operationByUserId":"admin","operationByUser":"系统管理员","operationAt":"2022-07-03T14:11:38+08:00"},
     startTime: '2022-07-29T00:00:00+08:00',
@@ -177,7 +176,7 @@ new Vue({
   async mounted() {
     await this.buildEcharts();
     this.timeRange = [dayjs().subtract(13, 'day').startOf('day').format(), dayjs().endOf('day').format()]
-    
+
     const { pageviewCountList, deviceCountList, pageviewCountPreviousList, deviceCountPreviousList } = {
         "pageviewCountList": [
           [

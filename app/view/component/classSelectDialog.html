@@ -44,8 +44,13 @@
   Vue.component("classSelectDialog", {
     template: "#classSelectDialog",
     vueComponent: 'classSelectDialog',
-    mixins: [ window.jianghuUiActionMixins ],
-    data: () => (window.vueData),
+    data: () => ({
+      isMobile: window.innerWidth < 600,
+      classSelectDialog_filterText: '',
+      classSelectDialog_dataList: [],
+      classSelectDialog_selected: null,
+      classSelectDialog_shown: false
+    }),
     computed: {
       classSelectDialog_dataList_filter() {
         const classSelectDialog_filterText = (this.classSelectDialog_filterText || '').toLowerCase();
@@ -58,9 +63,6 @@
         )
         return list;
       },
-        isMobile() {
-          return window.innerWidth < 600;
-        },
     },
     methods: {
       selectItem({ item }) {
