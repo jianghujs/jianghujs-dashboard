@@ -16,6 +16,12 @@ module.exports = appInfo => {
   const downloadBasePath = `/${appId}/upload`;
 
   return {
+    cluster: {
+      listen: {
+        port: 7001,
+        hostname: '0.0.0.0',
+      },
+    },
     appId,
     appTitle: '江湖演示-初级',
     appLogo: `${appId}/public/img/logo.png`,

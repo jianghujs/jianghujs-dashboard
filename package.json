@@ -25,9 +25,9 @@
     "node": ">=10.0.0"
   },
   "scripts": {
-    "start": "egg-scripts start --daemon --port=7010 --title=jianghujs-dashboard",
+    "start": "egg-scripts start --daemon --title=jianghujs-dashboard",
     "stop": "egg-scripts stop --title=jianghujs-dashboard",
-    "dev": "egg-bin dev --port=7010",
+    "dev": "egg-bin dev",
     "debug": "egg-bin debug",
     "test": "npm run lint -- --fix && npm run test-local",
     "test-local": "egg-bin test",
