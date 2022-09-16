@@ -23,7 +23,7 @@ module.exports = appInfo => {
       },
     },
     appId,
-    appTitle: '江湖演示-初级',
+    appTitle: '数据分析',
     appLogo: `${appId}/public/img/logo.png`,
     appType: 'single',
     appDirectoryLink: '/',
