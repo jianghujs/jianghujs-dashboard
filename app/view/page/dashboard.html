@@ -1,0 +1,381 @@
+{% extends 'template/jhTemplateV4.html'%}
+
+{% block vueTemplate %}
+
+<script type="text/html" id="app-template">
+  <div>
+    <v-app mobile-breakpoint="sm">
+      <jh-menu />
+      <v-main class="mt-15">
+        <!-- 头部内容 >>>>>>>>>>>>> -->
+        <div class="jh-page-second-bar px-8">
+          <v-row class="align-center">
+            <v-col cols="12" xs="12" sm="12" md="4" xl="3">
+              <div class="py-4 text-body-1 font-weight-bold">dashboard
+                <!-- 帮助页按钮 -->
+                <span role="button" class="success--text font-weight-regular jh-font-size-13 ml-2" @click="isHelpPageDrawerShown = true">
+                  <v-icon size="13" class="success--text">mdi-help-circle-outline</v-icon>帮助
+                </span>
+              </div>
+            </v-col>
+            <!-- pc端的搜索条件表单 >>>>>>>> -->
+            <v-col cols="12" xs="12" sm="12" md="8" xl="9">
+              <v-row class="jh-backend-form-container justify-end ma-0 py-3">
+                <div style="background-color: #fff; height: 32px; line-height: 32px; border-radius: 4px;border: 1px solid #DFDFDF;" class="d-flex px-3">
+                  <span style="font-size: 14px;color: #a5a9ab;">时间区间：</span>
+                  <v-icon style="color: #a5a9ab;" small class="mr-1">mdi-calendar</v-icon>
+                  <div style="display: inline-block">
+                      <v-menu ref="timeRangeRef" offset-y :close-on-content-click="false">
+                          <template v-slot:activator="{ on, attrs }">
+                              <span v-bind="attrs" v-on="on" style="letter-spacing: 0.5px; font-size: 14px; font-weight: 500; color: #5E6278;">
+                                  {{timeRange && dayjs(timeRange[0]).format('YYYY-MM-DD')}} - {{timeRange &&
+                                  dayjs(timeRange[1]).format('YYYY-MM-DD')}}
+                              </span>
+                          </template>
+                      </v-menu>
+                  </div>
+              </div>
+              </v-row>
+            </v-col>
+            <!-- <<<<<<<< pc端的搜索条件表单 -->
+          </v-row>
+        </div>
+        <!-- <<<<<<<<<<<<< 头部内容 -->
+  
+        <div class="jh-page-body-container px-8">
+          <!-- 页面内容 >>>>>>>>>>>>> -->
+          <v-container class="fullScreen d-flex flex-column pa-xs-0 pa-0">
+            <v-card style="background-color: #F2F2F2;" flat>
+              <!-- 浏览量折线图 -->
+              <v-card class="mx-auto pa-4 mb-4" flat style="max-height: 350px">
+                <div class="echartsContainer" id="viewsBox"></div>
+              </v-card>
+              <v-row class="ma-0" dense no-gutters>
+                <!-- 总览 -->
+                <v-col cols="12" md="4" lg="3" sm="6" class="block-item mb-4"
+                  v-if="website.websiteConfig && website.websiteConfig.总览">
+                  <div class="mx-auto pa-4 white mb-4 mr-sm-4" style="height: 100%">
+                    <div class="smallBox">
+                      <div class="chart-title mb-2">
+                        总览
+                      </div>
+                      <div class="d-flex py-2">
+                        <span>总浏览量</span><v-spacer></v-spacer><span>{{overView.pageviewTotalCount}}</span>
+                      </div>
+                      <v-divider></v-divider>
+                      <div class="d-flex py-2"><span>Days in
+                          range</span><v-spacer></v-spacer><span>{{overView.dayRange}}</span></div>
+                      <v-divider></v-divider>
+                      <div class="d-flex py-2"><span>Average Daily
+                          Pageviews</span><v-spacer></v-spacer><span>{{overView.perDayPageviewCount}}</span></div>
+                      <v-divider></v-divider>
+                      <div class="d-flex py-2">
+                        <span>独立设备总数</span><v-spacer></v-spacer><span>{{overView.deviceTotalCount}}</span>
+                      </div>
+                      <v-divider></v-divider>
+                      <div class="d-flex py-2">
+                        <span>昨日浏览量</span><v-spacer></v-spacer><span>{{overView.pageviewYestodayCount}}</span>
+                      </div>
+                      <v-divider></v-divider>
+                      <div class="d-flex py-2">
+                        <span>今日浏览量</span><v-spacer></v-spacer><span>{{overView.pageviewTodayCount}}</span>
+                      </div>
+                      <v-divider></v-divider>
+                      <div class="d-flex py-2">
+                        <span>最后30分钟浏览量</span><v-spacer></v-spacer><span>{{overView.pageviewLastHalfHourCount}}</span>
+                      </div>
+                      <v-divider></v-divider>
+                    </div>
+                  </div>
+                </v-col>
+                <!-- 访问日志 -->
+                <v-col cols="12" md="4" lg="3" sm="6" class="block-item mb-4"
+                  v-if="website.websiteConfig && website.websiteConfig.访问日志">
+                  <div class="mx-auto pa-4 white mb-4 mr-sm-4" style="height: 100%">
+                    <div class="smallBox">
+                      <span class="chart-title">
+                        访问日志
+                      </span>
+                      <v-list style="height: 280px;" class="overflow-y-auto">
+                        <template v-for="(item, index) in pageviewList">
+                          <div class="d-flex py-1 align-center">
+                            <span><a :href="item.pageviewUrl" target="_blank">{{item.pageviewTitle}}</a></span>
+                            <v-spacer></v-spacer>
+                            <span class="pa-1">{{item.pageviewUserIp}}</span>
+                          </div>
+                          <v-divider :key="index"></v-divider>
+                        </template>
+                      </v-list>
+                    </div>
+                  </div>
+                </v-col>
+                <!-- 站内搜索关键词 -->
+                <v-col cols="12" md="4" lg="3" sm="6" class="block-item mb-4"
+                  v-if="website.websiteConfig && website.websiteConfig.站内搜索关键词">
+                  <common-chart idPrefix="websiteSearchList" @showBigChart="doUiAction('detail', $event)" :listData="websiteSearchList"
+                    title="站内搜索关键词" keyName="关键词" defaultType="List" />
+                </v-col>
+                <!-- 页面访问量列表 -->
+                <v-col cols="12" md="4" lg="3" sm="6" class="block-item mb-4"
+                  v-if="website.websiteConfig && website.websiteConfig.页面访问量列表">
+                  <div class="mx-auto pa-4 white mb-4 mr-sm-4" style="height: 100%">
+                    <div class="smallBox">
+                      <span class="chart-title">
+                        页面访问量列表
+                      </span>
+                      <v-list style="height: 280px;" class="overflow-y-auto">
+                        <template v-for="(item, index) in pageviewRankingList">
+                          <div class="d-flex py-1 align-center">
+                            <span><a :href="item.link" target="_blank">{{item.name}}</a></span>
+                            <v-spacer></v-spacer>
+                            <span>{{item.value}}</span>
+                          </div>
+                          <v-divider v-if="index < pageviewRankingList.length - 1" :key="index"></v-divider>
+                        </template>
+                      </v-list>
+          
+                    </div>
+                  </div>
+                </v-col>
+                <!-- 屏幕分辨率(设备数) -->
+                <v-col cols="12" md="4" lg="3" sm="6" class="block-item mb-4"
+                  v-if="website.websiteConfig && website.websiteConfig.屏幕分辨率">
+                  <common-chart ref="screenCommonChart" idPrefix="screenRankingList" @showBigChart="doUiAction('detail', $event)"
+                    :listData="screenRankingList" title="屏幕分辨率(设备数)" keyName="分辨率" defaultType="List" />
+                </v-col>
+              </v-row>
+            </v-card>
+          </v-container>
+          <!-- <<<<<<<<<<<<< 页面内容 -->
+  
+          <!-- 详情抽屉 -->
+          <v-navigation-drawer v-model="isDetailDrawerShown" v-click-outside="drawerClickOutside" fixed temporary
+            right width="80%" class="elevation-24">
+            <!-- 抽屉标题 -->
+            <v-row no-gutters>
+              <span class="text-h7 font-weight-bold pa-4">详情</span>
+            </v-row>
+            <v-divider class="jh-divider"></v-divider>
+
+            <!-- 图表 -->
+            <common-chart
+                v-if="isDetailDrawerShown"
+                :idPrefix="editItem.idPrefix + '_big'"
+                :listData="editItem.listData"
+                :title="editItem.title"
+                :keyName="editItem.keyName"
+                :bigChart="true"
+                defaultType="editItem.currentType"
+                class="pa-6">
+            </common-chart>
+
+            <!-- 抽屉关闭按钮 -->
+            <v-btn elevation="0" color="success" fab absolute top left small tile class="drawer-close-float-btn"
+              @click="isDetailDrawerShown = false">
+              <v-icon>mdi-close</v-icon>
+            </v-btn>
+          </v-navigation-drawer>
+        </div>
+  
+        <!-- 帮助页抽屉 >>>>>>>>>>>>> -->
+        <v-navigation-drawer v-model="isHelpPageDrawerShown" v-click-outside="drawerClickOutside" fixed temporary
+          right width="80%" class="elevation-24">
+          <iframe style="border: 0" :src="`/${appInfo.appId}/pageDoc#1.dashboard.md`" width="100%"
+            height="100%"></iframe>
+  
+          <v-btn elevation="0" color="success" fab absolute top left small tile class="drawer-close-float-btn"
+            @click="isHelpPageDrawerShown = false">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+        </v-navigation-drawer>
+        <!-- <<<<<<<<<<<<< 帮助页抽屉 -->
+  
+      </v-main>
+    </v-app>
+  
+    <jh-toast />
+    <jh-mask />
+    <jh-confirm-dialog />
+  
+  </div>
+</script>
+
+<div id="app">
+</div>
+
+
+{% endblock %}
+
+{% block vueScript %}
+
+<!-- 加载页面组件 >>>>>>>>>>>>> -->
+{% include 'echartOption/views.html' %}
+{% include 'echartOption/commonChart.html' %}
+<!-- <<<<<<<<<<<<< 加载页面组件 -->
+
+<!-- 加载第三方库js >>>>>>>>>>>>> -->
+<script src="/<$ ctx.app.config.appId $>/public/echarts/echarts.min.js"></script>
+<!-- <<<<<<<<<<<<< 加载第三方库js -->
+
+<script type="module">
+  new Vue({
+    el: '#app',
+    template: '#app-template',
+    vueComponent: 'page',
+    vuetify: new Vuetify(),
+    data: {
+      isHelpPageDrawerShown: false,
+
+      // 时间区间
+      timeRange: [dayjs().subtract(13, 'day').startOf('day').format(), dayjs().endOf('day').format()],
+      // 站点配置
+      website: { "id": 1, "websiteUuid": "Zg9RTz1FjHn3QO0z3MFC_", "websiteName": "命定官网 - 中文", "websiteDomain": "www.mingding.org", "websiteConfig": { "总览": true, "访问日志": true, "站内搜索关键词": true, "页面访问量列表": false, "来源域名url列表": true, "国家排行": true, "语言排行": true, "浏览器客户端": true, "屏幕分辨率": true, "预估访客停留时间": true, "操作系统排行": true, "分类排行": true, "文章排行": true, "浏览器搜索引擎": true, "IP访问量": true, "404访问日志": true, "用户访问排行": false }, "operation": "jhInsert", "operationByUserId": "admin", "operationByUser": "系统管理员", "operationAt": "2022-07-03T14:11:38+08:00" },
+      // 浏览量
+      views: {
+        "pageviewCountList": [["07/29", 5290], ["07/30", 5154], ["07/31", 4715], ["08/01", 5854], ["08/02", 5671], ["08/03", 4999], ["08/04", 5645], ["08/05", 5584], ["08/06", 5717], ["08/07", 4658], ["08/08", 2749], ["08/09", 5680], ["08/10", 4998], ["08/11", 5217]],
+        "deviceCountList": [["07/29", 691], ["07/30", 765], ["07/31", 668], ["08/01", 726], ["08/02", 766], ["08/03", 752], ["08/04", 871], ["08/05", 1670], ["08/06", 2977], ["08/07", 2603], ["08/08", 1123], ["08/09", 2877], ["08/10", 2582], ["08/11", 2897]],
+        "pageviewCountPreviousList": [["07/29", 5826], ["07/30", 5434], ["07/31", 5988], ["08/01", 5673], ["08/02", 5816], ["08/03", 4959], ["08/04", 5686], ["08/05", 5647], ["08/06", 5155], ["08/07", 5526], ["08/08", 5072], ["08/09", 6113], ["08/10", 5754], ["08/11", 5290]], "deviceCountPreviousList": [["07/29", 599], ["07/30", 613], ["07/31", 584], ["08/01", 600], ["08/02", 565], ["08/03", 661], ["08/04", 640], ["08/05", 637], ["08/06", 612], ["08/07", 679], ["08/08", 575], ["08/09", 664], ["08/10", 666], ["08/11", 691]]
+      },
+      viewsCount: null,
+      // 总览
+      overView: { "dayRange": 13, "pageviewTotalCount": 70294, "perDayPageviewCount": 5407, "deviceTotalCount": 17428, "pageviewYestodayCount": 4998, "pageviewLastHalfHourCount": 111, "pageviewTodayCount": 3580 },
+      // 访问日志
+      pageviewList: [{ "id": 306164, "websiteId": 1, "deviceId": 15138, "pageviewUserIp": "101.78.92.79", "pageviewUserIpRegion": "SG", "pageviewAt": "2022-08-11T15:20:15+08:00", "pageviewUrl": "/", "pageviewReferrer": "", "pageviewTitle": "命定神学 -  华人社区 ", "operation": "insert", "operationByUserId": null, "operationByUser": null, "operationAt": "2022-08-11T15:20:15+08:00" }, { "id": 306163, "websiteId": 1, "deviceId": 25336, "pageviewUserIp": "175.173.91.181", "pageviewUserIpRegion": "CN", "pageviewAt": "2022-08-11T15:20:09+08:00", "pageviewUrl": "/?p=12426", "pageviewReferrer": "https://m.baidu.com/", "pageviewTitle": "【微课】创世记第04章 -  命定神学 ", "operation": "insert", "operationByUserId": null, "operationByUser": null, "operationAt": "2022-08-11T15:20:09+08:00" }], 
+      // 站内搜索关键词
+      websiteSearchList: [], 
+      // 屏幕分辨率
+      screenRankingList: [{ "name": "375x812", "value": 7151 }, { "name": "1366x1366", "value": 1709 }, { "name": "360x800", "value": 930 }, { "name": "360x780", "value": 920 }, { "name": "360x760", "value": 553 }, { "name": "1920x1080", "value": 408 }, { "name": "360x640", "value": 379 }, { "name": "414x896", "value": 256 }, { "name": "360x720", "value": 223 }, { "name": "390x844", "value": 220 }, { "name": "360x803", "value": 209 }, { "name": "375x667", "value": 205 }, { "name": "1366x768", "value": 199 }, { "name": "320x712", "value": 194 }, { "name": "414x736", "value": 192 }, { "name": "1200x1366", "value": 175 }, { "name": "393x873", "value": 170 }, { "name": "360x772", "value": 159 }, { "name": "360x792", "value": 156 }, { "name": "1536x864", "value": 156 }, { "name": "其它", "value": 2864 }], 
+
+      // 操作相关
+      isDetailDrawerShown: false,
+      editItem: {},
+    },
+    watch: {},
+    async created() {
+        window.onresize = () => {
+            if (this.resetTime) clearTimeout(this.resetTime)
+            this.resetTime = setTimeout(() => {
+                this.viewsCount && this.viewsCount.resize()
+                this.$refs.screenCommonChart && this.$refs.screenCommonChart.resize()
+            }, 100)
+        }
+    },
+    async mounted() {
+        await this.doUiAction('initEchart');
+    },
+    methods: {
+      async doUiAction(uiActionId, uiActionData) {
+        switch (uiActionId) {
+          case 'initEchart':
+            await this.initEchart();
+            break;
+          case 'detail':
+            await this.prepareData(uiActionData);
+            await this.openDetailDrawer();
+            break;
+          default:
+            console.error("[doUiAction] uiActionId not find", { uiActionId });
+            break;
+        }
+      },
+
+      // ---------- 初始化图表 uiAction >>>>>>>>>> --------
+      async checkDomExist(domId, count) {
+          const dom = document.getElementById(domId);
+          return new Promise(resolve => {
+              if (dom) {
+                  resolve(dom);
+              } else {
+                  if (count > 5) {
+                      resolve(null);
+                  } else {
+                      setTimeout(async () => {
+                          let newCount = count || 0;
+                          resolve(await this.checkDomExist(domId, ++newCount));
+                      }, 300)
+                  }
+              }
+          })
+      },
+      async initEchart() {
+          const viewsBoxDom = await this.checkDomExist('viewsBox');
+          if (viewsBoxDom) {
+              this.viewsCount = new ViewsCount(viewsBoxDom);
+              const { pageviewCountList, deviceCountList, pageviewCountPreviousList, deviceCountPreviousList } = this.views;
+              this.viewsCount.reload([pageviewCountList, deviceCountList, pageviewCountPreviousList, deviceCountPreviousList]);
+          }
+      },
+      // ---------- <<<<<<<<<<< 初始化图表 uiAction  --------
+
+      // ---------- 详情 uiAction >>>>>>>>>> --------
+      prepareData(ref) {
+          this.editItem = ref;
+      },
+      openDetailDrawer(){
+        this.isDetailDrawerShown = true;
+      }
+      // ---------- <<<<<<<<<<< 详情 uiAction  --------
+    }
+  })
+</script>
+
+<style scoped>
+  .echartsContainer {
+      width: 100%;
+      height: 300px;
+  }
+
+  .overview {
+      width: 100%;
+      height: 277px;
+  }
+
+  .smallBox {
+      height: 500px;
+  }
+
+  .v-application ol,
+  .v-application ul {
+      padding: 5px 0;
+  }
+
+  .v-application ol,
+  .v-application ul li {
+      display: flex;
+      padding: 2px 0;
+      /* border-bottom: 1px solid #eee; */
+  }
+
+  .v-application ol,
+  .v-application ul li a {
+      flex: 1;
+  }
+
+  .block-item {
+      height: 340px;
+  }
+
+  .block-item:nth-child(4n)>div {
+      margin-right: 0 !important;
+  }
+
+  .chart-title {
+      font-size: 14px;
+      font-weight: 600;
+  }
+
+  .theme--light.v-divider,
+  .theme--light.v-navigation-drawer .v-divider {
+      border-color: #F4F5F6;
+  }
+
+  .pageBodyContainer a {
+      color: #4caf50 !important;
+      text-decoration: none;
+  }
+
+  .v-application .v-btn:not(.v-btn--round).v-size--small{
+    min-height: 28px !important;
+  }
+</style>
+{% endblock %}

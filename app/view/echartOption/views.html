@@ -1,0 +1,89 @@
+<script type="application/javascript">
+class ViewsCount {
+  viewsBoxChart = null;
+  datas = [[], [], [], []];
+  legendTitles = ['浏览量', '浏览量(上个周期)', '设备量', '设备量(上个周期)'];
+
+  constructor(viewsBoxDom) {
+    this.viewsBoxChart = echarts.init(viewsBoxDom);
+    this.viewsOption && this.viewsBoxChart.setOption(this.viewsOption);
+  }
+
+  reload(datas) {
+    if (datas[0][0][0] === '00:00') {
+      this.datas = [datas[0],datas[1]];
+      this.legendTitles = ['浏览量', '设备量'];
+    } else {
+      this.datas = datas;
+      this.legendTitles = ['浏览量', '浏览量(上个周期)', '设备量', '设备量(上个周期)'];
+    }
+    this.prepareViewsOption()
+    this.viewsBoxChart.clear()
+    this.viewsOption && this.viewsBoxChart.setOption(this.viewsOption);
+  }
+
+  resize() {
+    this.viewsBoxChart.resize()
+  }
+  getLineSerie(name, data, color) {
+    return {
+      name,
+      type: 'line',
+      smooth: true,
+      symbol: 'none',
+      data,
+      itemStyle: {
+        normal: {
+          color,
+        }
+      }
+    }
+  }
+  prepareViewsOption() {
+    this.viewsOption = {
+      title: {
+        text: '浏览量折线图',
+        textStyle:{
+          fontSize: 14,
+          fontWeight:'600'
+        }
+      },
+      tooltip: {
+        trigger: 'axis'
+      },
+      legend: {
+        top: 30,
+        data: this.legendTitles
+      },
+      grid: {
+        left: '3%',
+        right: '4%',
+        bottom: '3%',
+        top: 100,
+        containLabel: true
+      },
+      toolbox: {
+        feature: {
+          // saveAsImage: {}
+        }
+      },
+      xAxis: {
+        type: 'category',
+        boundaryGap: false,
+      },
+      yAxis: {
+        type: 'value',
+      },
+      series: this.datas.length === 2 ? [
+        this.getLineSerie('浏览量', this.datas[0], '#dd6b66'),
+        this.getLineSerie('设备量', this.datas[1], '#90CC75'),
+      ] : [
+        this.getLineSerie('浏览量', this.datas[0], '#dd6b66'),
+        this.getLineSerie('浏览量(上个周期)', this.datas[2], 'black'),
+        this.getLineSerie('设备量', this.datas[1], '#90CC75'),
+        this.getLineSerie('设备量(上个周期)', this.datas[3], 'grey'),
+      ]
+    };
+  }
+}
+</script>

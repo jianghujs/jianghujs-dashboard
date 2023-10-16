@@ -1,0 +1,317 @@
+<script type="text/x-template" id="_CommonChart">
+  <div class="mx-auto pa-4 white mb-4 mr-sm-4" style="height: 100%">
+    <div class='d-flex flex-row pa-0 align-start' style="height: 28px">
+      <span class="chart-title" style="white-space: nowrap">{{ title }}</span>
+      <v-spacer/>
+      <v-btn small v-if="!bigChart" @click="showBigChart" class="mr-1 customBtn">
+        详情
+      </v-btn>
+      <div>
+        <v-select
+            class="customSelect"
+          :items="types"
+          v-model="currentType"
+          single-line
+          dense
+          small
+          filled
+        ></v-select>
+      </div>
+    </div>
+    <template v-if="currentType=='PieChart'" >
+      <div class="chart" :id="idPrefix+'_pieChart'"></div>
+    </template>
+    <template v-if="currentType=='Histogram'" >
+      <div class="chart" :id="idPrefix+'_histogram'"></div>
+    </template>
+    <template v-if="currentType=='HistogramHorizontal'" >
+      <div class="chart-box">
+        <div v-if="listData.length" class="chart" :id="idPrefix+'_histogramHorizontal'" :style="{height: Math.max(260, (listData.length * 25)) + 'px'}"></div>
+      </div>
+    </template>
+    <template v-if="currentType=='List'" >
+      <div class="chart" :id="idPrefix+'_list'">
+        <v-list style="height: 100%;" class="overflow-y-auto">
+          <div class="d-flex py-1 font-weight-bold" style="color: #5E6278">
+            <span>Total</span>
+            <v-spacer></v-spacer>
+            <span>{{sum}}</span>
+            <span style="width: 50px; text-align: right; flex-shrink: 0;">100%</span>
+          </div>
+          <template v-for="(item, index) in listData">
+            <div class="d-flex py-1">
+              <a :href="item.link" target="_blank">{{item.name}}</a>
+              <v-spacer></v-spacer>
+              <span>{{item.value}}</span>
+              <span style="width: 50px; text-align: right; flex-shrink: 0;">{{(item.value / sum * 100).toFixed(1)}}%</span>
+            </div>
+            <v-divider :key="index" ></v-divider>
+          </template>
+        </v-list>
+      </div>
+    </template>
+</div>
+</script>
+
+<script>
+  Vue.component("CommonChart", {
+    template: "#_CommonChart",
+    props: {
+      idPrefix: String,
+      title: String,
+      keyName: String,
+      defaultType: String,
+      leftSpacePercent:{
+        type: String,
+        default: '20%'
+      },
+      listData: {
+        type: Array,
+        default: []
+      },
+      bigChart: false,
+    },
+    data() {
+      return {
+        types: [
+          {text: '饼图', value: 'PieChart'},
+          // {text: '直方图', value: 'Histogram'},
+          {text: '直方图', value: 'HistogramHorizontal'},
+          {text: '列表', value: 'List'},
+        ],
+        currentType: 'PieChart',
+        pieChart: null,
+        histogram: null,
+        histogramHorizontal: null,
+      }
+    },
+    computed: {
+      sum() {
+        let sum = 0;
+        this.listData.forEach(data => sum += parseInt(data.value))
+        return sum;
+      }
+    },
+    watch: {
+      listData(v) {
+        this.init()
+      },
+      currentType(v) {
+        localStorage.setItem(this.idPrefix.replace('_big', '') + '_chartType', v)
+        if (this.pieChart) {
+          this.pieChart.dispose();
+          this.pieChart=null
+        }
+        if (this.histogram) {
+          this.histogram.dispose();
+          this.histogram = null
+        }
+        if (this.histogramHorizontal) {
+          this.histogramHorizontal.dispose();
+          this.histogramHorizontal = null
+        }
+        this.init()
+      }
+    },
+    created() {
+      // 记住使用的类型
+      this.currentType = localStorage.getItem(this.idPrefix.replace('_big', '') + '_chartType') || this.defaultType || 'PieChart'
+      this.init()
+    },
+    methods: {
+      async init() {
+        await this.initCharts()
+        this.loadChartOptionData()
+      },
+      async initCharts(){
+        if (!this.pieChart && this.currentType == 'PieChart') {
+          const pieChartDom = await this.checkDomExist(this.idPrefix + '_pieChart');
+          if (pieChartDom) {
+            this.pieChart = echarts.init(pieChartDom)
+          }
+        }
+        if (!this.histogram && this.currentType == 'Histogram') {
+          const histogramDom = await this.checkDomExist(this.idPrefix + '_histogram');
+          if (histogramDom) {
+            this.histogram = echarts.init(histogramDom)
+          }
+        }
+        if (!this.histogram && this.currentType == 'HistogramHorizontal') {
+          const histogramHorizontalDom = await this.checkDomExist(this.idPrefix + '_histogramHorizontal');
+          if (histogramHorizontalDom) {
+            this.histogramHorizontal = echarts.init(histogramHorizontalDom)
+          }
+        }
+      },
+      resize() {
+        if (this.pieChart) {
+          this.pieChart.resize()
+        }
+        if (this.histogram) {
+          this.histogram.resize()
+        }
+        if (this.histogramHorizontal) {
+          this.histogramHorizontal.resize()
+        }
+      },
+      loadChartOptionData() {
+        this.setPieChartOption(this.listData);
+        this.setHistogramOption(this.listData);
+        this.setHistogramHorizontalOption(this.listData);
+      },
+      setPieChartOption(data) {
+        if (!this.pieChart) {
+          return
+        }
+        const options = {
+          // color: [
+          //   '#5470C6',
+          //   '#6aa84f',
+          //   '#00ff00',
+          //   '#d48265',
+          //   '#980000',
+          //   '#c23531',
+          //   '#91c7ae',
+          //   '#749f83',
+          //   '#ca8622',
+          //   '#bda29a',
+          // ],
+          tooltip: {
+            trigger: 'item',
+            formatter: '{a} <br/>{b} : {c} ({d}%)'
+          },
+          series: [
+            {
+              name: this.keyName,
+              type: 'pie',
+              top: '30px',
+              radius: '55%',
+              center: ['50%', '50%'],
+              data: data,
+              emphasis: {
+                itemStyle: {
+                  shadowBlur: 10,
+                  shadowOffsetX: 0,
+                  shadowColor: 'rgba(0, 0, 0, 0.5)'
+                }
+              }
+            }
+          ]
+        }
+        this.pieChart.setOption(options)
+      },
+      setHistogramOption(data) {
+        if (!this.histogram) {
+          return
+        }
+        const options = {
+          tooltip: {
+          },
+          xAxis: {
+            data: data.map(item=>item.name)
+          },
+          yAxis: {},
+          series: [
+            {
+              name: this.keyName,
+              type: 'bar',
+              data: data
+            }
+          ]
+        }
+        this.histogram.setOption(options)
+      },
+      setHistogramHorizontalOption(data) {
+        if (!this.histogramHorizontal) {
+          return
+        }
+        const options = {
+          tooltip: {
+          },
+          xAxis: {
+            position: 'top',
+          },
+          yAxis: {
+            data: _.reverse(data.map(item=>item.name))
+          },
+          grid: {
+            left: this.leftSpacePercent,
+            right: '20px',
+            top: '30px',
+            bottom: '20px'
+          },
+          series: [
+            {
+              name: this.keyName,
+              type: 'bar',
+              data: _.reverse([...data])
+            }
+          ]
+        }
+        this.histogramHorizontal.setOption(options)
+      },
+      async checkDomExist(domId, count) {
+        const dom = document.getElementById(domId);
+        return new Promise(resolve => {
+          if(dom) {
+            resolve(dom);
+          } else {
+            if(count > 5) {
+              resolve(null);
+            } else {
+              setTimeout(async () => {
+                let newCount = count || 0;
+                resolve(await this.checkDomExist(domId, ++newCount));
+              }, 100)
+            }
+          }
+        })
+      },
+      showBigChart() {
+        this.$emit("showBigChart", this);
+      }
+    },
+  });
+</script>
+<style scoped>
+  .chart-box {
+    height: 90%;
+    overflow: scroll;
+  }
+  .chart {
+    height: 90%;
+  }
+  .txt {
+    font-size: 16px;
+    text-align: center;
+  }
+  .big-chart-btn {
+    width: 45px !important;
+    min-width: 0 !important;
+    margin-right: 10px;
+  }
+  body .theme--light.v-input.customSelect {
+    max-width: 80px;
+  }
+  .customBtn {
+    background: #F9FAFA!important;
+  }
+  .customBtn .v-btn__content {
+    font-size: 14px!important;
+    font-weight: normal;
+    color: rgba(0,0,0,.87);
+  }
+
+  body .customSelect.v-select.v-input--dense .v-select__selection--comma {
+    margin-right: 0!important;
+  }
+  .customSelect.v-text-field--filled.v-input--dense.v-text-field--single-line>.v-input__control>.v-input__slot {
+    min-height: 0;
+    height: 28px;
+    padding: 0 0 0 8px!important;
+  }
+  .customSelect.v-text-field--enclosed.v-input--dense:not(.v-text-field--solo).v-text-field--single-line .v-input__append-inner {
+    margin-top: 3px;
+    padding: 0!important;
+  }
+</style>
